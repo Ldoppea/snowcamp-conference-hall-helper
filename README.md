@@ -1,10 +1,11 @@
-# Snowcamp - Papercall helper
+# Snowcamp - ConferenceHall helper
 
-A helper project allowing to list papercall submissions in different ways
+A helper project allowing to list ConferenceHall submissions in different ways
 
 ## Getting Started
 
-Retrieve your API key from your Papercall event : `https://www.papercall.io/events/<eventID>/apidocs`
+Retrieve your API key from your ConferenceHall event : `https://conference-hall.io/organizer/event/<eventID>/edit/integrations`
+Retrieve your Bearer token from ConferenceHall : get the Authorisation header using your browser dev tools, should be something like `Bearer xxxxxx`
 
 Run the server
 
@@ -84,7 +85,7 @@ or
 ```
 ## Built With
 
-* [Papercall](https://www.papercall.io/)
+* [ConferenceHall](https://conference-hall.io)
 * [Vue](https://vuejs.org/)
 
 ## License

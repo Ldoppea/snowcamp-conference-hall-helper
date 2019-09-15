@@ -5,7 +5,7 @@
     <h2 v-if="mustTravel.length > 0">UNKNOWN - {{maybeNeedToTravel.length}}</h2>
     <author v-for="author in maybeNeedToTravel" :key="'maybeNeedToTravel' +author.speakerName" :authorData="author" aknowledgeFeedback showFinancial></author>
 
-    <h2 v-if="mustTravel.length > 0">MUST TRAVEL - {{mustTravel.length}}</h2>
+    <h2 v-if="mustTravel.length > 0">MAY NEED TO TRAVEL - {{mustTravel.length}}</h2>
     <author v-for="author in mustTravel" :key="'mustTravel' +author.speakerName" :authorData="author" aknowledgeFeedback showFinancial></author>
   </div>
 </template>
@@ -34,7 +34,7 @@ export default {
         .map(author => {
           return {
             ...author,
-            country: submissionsHelpers.getSubmissionsTagContent(author.submissions, 'Country'),
+            country: author.speakerLocation,
             financialOk: submissionsHelpers.getSubmissionsTagContent(author.submissions, 'FinancialOk')
           }
         })
@@ -42,7 +42,7 @@ export default {
       return submissionsByAuthor
     },
     mustTravel () {
-      return this.submissionsByAuthor.filter(author => author.country.includes('Alien'))
+      return this.submissionsByAuthor.filter(author => !author.country.includes('France'))
     },
     noNeedToTravel () {
       return this.submissionsByAuthor.filter(author => author.country.includes('France'))

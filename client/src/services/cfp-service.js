@@ -1,14 +1,16 @@
 import api from '@/services/api'
 
 export default {
-  fetchSubmissions (cfpToken) {
+  fetchSubmissions (cfpToken, cfpBearer) {
     return api().post('submissions', {
-      token: cfpToken
+      token: cfpToken,
+      bearer: cfpBearer
     })
   },
-  fetchEvent (cfpToken) {
+  fetchEvent (cfpToken, cfpBearer) {
     return api().post('event', {
-      token: cfpToken
+      token: cfpToken,
+      bearer: cfpBearer
     })
   }
 }

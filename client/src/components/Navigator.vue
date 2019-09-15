@@ -1,6 +1,7 @@
 <template>
   <div class="navigator">
     <input v-model="apiToken" placeholder="Conference Hall API Token" v-on:keyup.enter="submit">
+    <input v-model="bearerToken" placeholder="Conference Hall Bearer" v-on:keyup.enter="submit">
     <input v-model="emailAddress" placeholder="Email address" v-on:keyup.enter="submit">
     <button v-on:click="submit">Load data</button>
     <br />
@@ -18,6 +19,7 @@
       <router-link to="/">Authors</router-link> |
       <router-link to="/languages">Languages</router-link> |
       <router-link to="/tags">Tags</router-link> |
+      <router-link to="/formats">Formats</router-link> |
       <router-link to="/travelers">Travelers</router-link>
     </div>
     <router-view v-if="isLoaded"/>
@@ -45,11 +47,13 @@ export default {
   data () {
     return {
       apiToken: '',
+      bearerToken: '',
       emailAddress: ''
     }
   },
   mounted () {
     this.apiToken = localStorage.getItem('CFP_TOKEN')
+    this.bearerToken = localStorage.getItem('CFP_BEARER')
     this.emailAddress = localStorage.getItem('CFP_EMAIL')
   },
   computed: {
@@ -74,9 +78,11 @@ export default {
   methods: {
     submit () {
       localStorage.setItem('CFP_TOKEN', this.apiToken)
+      localStorage.setItem('CFP_BEARER', this.bearerToken)
       localStorage.setItem('CFP_EMAIL', this.emailAddress)
       this.$store.dispatch(actions.ACTION_INIT_CFP_TOKEN, {
         cfpToken: this.apiToken,
+        cfpBearer: this.bearerToken,
         cfpEmail: this.emailAddress
       })
     },

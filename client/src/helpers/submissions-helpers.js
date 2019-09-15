@@ -4,32 +4,34 @@ const languageTagFilter = (tag) => {
   return tag === 'French' || tag === 'English'
 }
 
-const isFrenchSubmission = (submission) => {
-  var languages = submission.tags.filter(languageTagFilter)
+const includeFrench = (languageStr) => {
+  const language = languageStr.toLowerCase()
+  return language.includes('french') || language.includes('français') || language.includes('francais') || language.includes('france')
+}
 
-  return languages.length === 1 && languages[0] === 'French'
+const includeEnglish = (languageStr) => {
+  const language = languageStr.toLowerCase()
+  return language.includes('english') || language.includes('anglais')
+}
+
+const isFrenchSubmission = (submission) => {
+  return includeFrench(submission.language) && !includeEnglish(submission.language)
 }
 
 const isEnglishSubmission = (submission) => {
-  var languages = submission.tags.filter(languageTagFilter)
-
-  return languages.length === 1 && languages[0] === 'English'
+  return includeEnglish(submission.language) && !includeFrench(submission.language)
 }
 
 const isBothLanguagesSubmission = (submission) => {
-  var languages = submission.tags.filter(languageTagFilter)
-
-  return languages.length === 2
+  return includeEnglish(submission.language) && includeFrench(submission.language)
 }
 
 const isNoLanguageSubmission = (submission) => {
-  var languages = submission.tags.filter(languageTagFilter)
-
-  return languages.length === 0
+  return !includeEnglish(submission.language) && !includeFrench(submission.language)
 }
 
 const isWorkshopSubmission = (submission) => {
-  return submission.talk.talk_format.startsWith('Workshop')
+  return submission.talk.talk_format.startsWith('University')
 }
 
 const isTalkSubmission = (submission) => {
@@ -43,12 +45,20 @@ const groupByAuthors = (submissions) => {
     const authorSumissions = groupedSubmissions[key]
     return {
       speakerName: key,
+      speakerLocation: authorSumissions[0].speakerLocation,
       hasFeedback: authorSumissions.some(submission => submission.feedbacks !== undefined && submission.feedbacks.length > 0),
       submissions: authorSumissions
     }
   })
 
   return submissionsByAuthor
+}
+
+const getLanguages = (languages) => {
+  return [
+    includeFrench(languages) ? 'French' : undefined,
+    includeEnglish(languages) ? 'English' : undefined
+  ]
 }
 
 const submissionToSubmissionLight = (submission) => {
@@ -58,7 +68,7 @@ const submissionToSubmissionLight = (submission) => {
     speakerLocation: submission.profile.location,
     talkName: submission.talk.title,
     tags: submission.tags,
-    languages: submission.tags.filter(languageTagFilter),
+    languages: getLanguages(submission.language),
     feedbacks: submission.feedback.map(feedback => {
       return {
         user: feedback.user.name,
@@ -69,6 +79,7 @@ const submissionToSubmissionLight = (submission) => {
     ratings: submission.ratings,
     isConference: submission.talk.talk_format.startsWith('Talk'),
     isUniversity: submission.talk.talk_format.startsWith('Workshop'),
+    format: submission.talk.talk_format,
     status: submission.state
   }
 }

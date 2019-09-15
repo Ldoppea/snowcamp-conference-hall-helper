@@ -15,9 +15,9 @@ const getters = {
 
 // actions
 const actions = {
-  async [actionTypes.ACTION_INIT_EVENT] ({ commit }, { cfpToken }) {
+  async [actionTypes.ACTION_INIT_EVENT] ({ commit }, { cfpToken, cfpBearer }) {
     console.log('load event')
-    const response = await CfpService.fetchEvent(cfpToken)
+    const response = await CfpService.fetchEvent(cfpToken, cfpBearer)
 
     commit(mutationTypes.INIT_EVENT, {
       event: response.data

@@ -1,13 +1,13 @@
 <template>
-  <div class="submission" :class="[submissionData.isConference ? 'conference' : 'university', filterByEmail && hasBeenRated ? 'rated-submission' : '', 'status-' + submissionData.status]">
+  <div class="submission" :class="[submissionData.isConference ? 'conference' : '', submissionData.isUniversity ? 'university' : '', !submissionData.isConference && !submissionData.isUniversity ? 'noformat' : '', filterByEmail && hasBeenRated ? 'rated-submission' : '', 'status-' + submissionData.status]">
     <div class="rating">
       <span class="rating-label">Your rating </span>
       <div class="rating-stars">
         <star-rating v-if="hasBeenRated" :rating="userRating" :increment="0.01" :fixed-points="2" :star-size="20" :show-rating="false" read-only></star-rating>
       </div>
     </div>
-    <a class="submission-link" :href="'https://www.papercall.io/cfps/1343/submissions/' + submissionData.id">{{submissionData.talkName}}</a>
-    <span class="submission-format"> : {{submissionData.isConference ? 'Talk' : 'Workshop'}}</span>
+    <a class="submission-link" :href="'https://conference-hall.io/organizer/event/mB6d6o0uQONgUiFuo9We/proposal/' + submissionData.id">{{submissionData.talkName}}</a>
+    <span class="submission-format"> : {{submissionData.isConference ? 'Talk' : ''}}{{submissionData.isUniversity ? 'Workshop' : ''}}{{!submissionData.isConference && !submissionData.isUniversity ? 'NoFormat' : ''}}</span>
     <span class="submission-status"> - {{submissionData.status}}</span>
     <div class="languages" v-if="showLanguages && submissionData.languages !== undefined && submissionData.languages.length > 0">
       <span v-for="language in submissionData.languages" :key="language" :class="'language-' + language" >
@@ -106,6 +106,9 @@ export default {
 }
 .conference .submission-format {
   color: #008bff;
+}
+.noformat .submission-format {
+  color: #ff0000;
 }
 .status-submitted .submission-status {
   color: grey;

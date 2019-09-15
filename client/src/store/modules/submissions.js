@@ -22,9 +22,9 @@ const getters = {
 
 // actions
 const actions = {
-  async [actionTypes.ACTION_INIT_SUBMISSIONS] ({ commit }, { cfpToken }) {
+  async [actionTypes.ACTION_INIT_SUBMISSIONS] ({ commit }, { cfpToken, cfpBearer }) {
     console.log('load submissions')
-    const response = await CfpService.fetchSubmissions(cfpToken)
+    const response = await CfpService.fetchSubmissions(cfpToken, cfpBearer)
 
     commit(mutationTypes.INIT_SUBMISSIONS, {
       submissions: response.data

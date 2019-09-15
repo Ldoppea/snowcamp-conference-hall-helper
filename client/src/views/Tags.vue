@@ -34,8 +34,8 @@ export default {
   },
   computed: {
     eventTags () {
-      return this.$store.getters.event.cfp.tags.filter(tag => {
-        return tag !== 'English' && tag !== 'French'
+      return this.$store.getters.event.categories.map(tag => {
+        return tag.name
       })
     },
     submissions () {

@@ -1,99 +1,123 @@
 const axios = require('axios')
-const PromiseBb = require("bluebird");
 
-const MAX_CONCURRENT = 20
-
-axios.defaults.baseURL = 'https://www.papercall.io/api/v1/'
+axios.defaults.baseURL = 'https://www.conference-hall.io/api/'
 axios.defaults.timeout = 100000
 
-const getAxiosConfig = (cfpToken) => {
+const getAxiosConfig = (cfpbearer) => {
   const config = {
     headers: {
-      'Authorization' : cfpToken
+      'content-type': 'application/json; charset=utf-8',
+      'Authorization': cfpbearer
     }
   }
 
   return config
 }
 
-// Get X submissions from the event, by submission state
-const getSubmissionsByState = (numberOfSubmissions, state, config) => {
-  return axios.get(`submissions?per_page=${numberOfSubmissions}&state=${state}`, config)
-    .then(response => {
-      return response.data
-    })
-    .catch(error => {
-      console.log(error)
-      throw error
-    })
-}
-
-// Get X submissions from the event
-const getSubmissions = (numberOfSubmissions, config) => {
+// Get submissions from the event
+const getSubmissions = (config, apiToken) => {
   return Promise.all([
-    getSubmissionsByState(numberOfSubmissions, 'submitted', config),
-    getSubmissionsByState(numberOfSubmissions, 'accepted', config),
-    getSubmissionsByState(numberOfSubmissions, 'rejected', config),
-    getSubmissionsByState(numberOfSubmissions, 'waitlist', config)
-  ]).then(([submitted, accepted, rejected, waitlist]) => {
-      return [
-        ...submitted,
-        ...accepted,
-        ...rejected,
-        ...waitlist
-      ]
-    })
-    .catch(error => {
-      console.log(error)
-      throw error
-    })
-}
-
-// Get feedbacks by submissionId
-const getSubmissionFeedback = (submissionId, config) => {
-  console.log('getSubmissionFeedback', submissionId)
-  return axios.get(`submissions/${submissionId}/feedback`, config)
-    .then(response => {
-      return response.data
-    })
-    .catch(error => {
-      console.log(error)
-      throw error
-    })
-}
-
-// Fill specified submission object with its feedbacks
-const retrieveFeedbackIntoSubmission = (submission, config) => {
-  return getSubmissionFeedback(submission.id, config)
-    .then(feedback => {
+    axios.get(`v1/event/mB6d6o0uQONgUiFuo9We?key=${apiToken}`, config),
+    axios.get(`private/export/mB6d6o0uQONgUiFuo9We?sortOrder=newest&output=json`, config)
+  ]).then(([publicEvent, privateEvent]) => {
       return {
-        ...submission,
-        feedback
+        publicEvent: publicEvent.data,
+        privateEvent: privateEvent.data
       }
     })
+    .then(retrieveSubmissionsFromEvent)
     .catch(error => {
       console.log(error)
       throw error
     })
 }
 
-// Fill all specified submissions objects with their feedbacks 
-const retrieveFeedbackIntoSubmissions = (submissions, config) => {
-  return PromiseBb.map(
-    submissions,
-    submission => retrieveFeedbackIntoSubmission(submission, config),
-    { concurrency: MAX_CONCURRENT }
-  )
-  .catch(error => {
-    console.log(error)
-    throw error
+const getTalkFormat = (event, formatId) => {
+  if (formatId === undefined) {
+    return ''
+  }
+
+  return event.formats.find(format => format.id === formatId).name
+}
+
+const getTalkCategory = (event, categoryId) => {
+  if (categoryId === undefined) {
+    return ''
+  }
+
+  return event.categories.find(category => category.id === categoryId).name
+}
+
+const getTalkSpeaker = (privateEvent, talk) => {
+  return privateEvent.speakers
+    .filter(speaker => speaker.uid === talk.speakers[0]) // TODO : Retourner plusieurs speakers
+    .map(speaker => {
+      console.log(speaker)
+      let country = ''
+      if (speaker.address && speaker.address.country) {
+        country = speaker.address.country.long_name
+      }
+      return {
+        name: speaker.displayName,
+        email: speaker.email,
+        location: country
+      }
+    })[0]
+}
+
+const getTalkFeedbacks = (privateEvent, talk) => {
+  const privateTalkData = privateEvent.talks.find(privateTalk => privateTalk.title === talk.title && privateTalk.abstract === talk.abstract)
+  
+  return privateTalkData.organizersThread
+    .map(feedback => {
+      return {
+        id: feedback.id,
+        body: feedback.message,
+        created_at: feedback.date._seconds,
+        user : {
+          name : ''
+        }
+      }
+    })
+}
+
+const getTalkRatings = (privateEvent, talk) => {
+  const privateTalkData = privateEvent.talks.find(privateTalk => privateTalk.title === talk.title && privateTalk.abstract === talk.abstract)
+
+  return privateTalkData.organizersThread
+    .map(rating => {
+      return {
+        id: rating.id,
+        comments: rating.message,
+        created_at: rating.date._seconds,
+        user: {
+          name: ''
+        }
+      }
+    })
+}
+
+const retrieveSubmissionsFromEvent = (events) => {
+  return events.publicEvent.talks.map(currentTalk => {
+    return {
+      id: currentTalk.id,
+      state: currentTalk.state,
+      talk: {
+        title: currentTalk.title,
+        description: currentTalk.abstract,
+        talk_format: getTalkFormat(events.publicEvent, currentTalk.formats)
+      },
+      language: currentTalk.language || '',
+      tags: [getTalkCategory(events.publicEvent, currentTalk.categories) ],
+      profile: getTalkSpeaker(events.privateEvent, currentTalk),
+      feedback: [],
+      ratings: getTalkRatings(events.privateEvent, currentTalk)
+    }
   })
 }
 
-// Get ratings by submissionId
-const getSubmissionRatings = (submissionId, config) => {
-  console.log('getSubmissionRatings', submissionId)
-  return axios.get(`submissions/${submissionId}/ratings`, config)
+const getEvent = (config, apiToken) => {
+  return axios.get(`v1/event/mB6d6o0uQONgUiFuo9We?key=${apiToken}`, config)
     .then(response => {
       return response.data
     })
@@ -103,57 +127,12 @@ const getSubmissionRatings = (submissionId, config) => {
     })
 }
 
-// Fill specified submission object with its ratings
-const retrieveRatingsIntoSubmission = (submission, config) => {
-  return getSubmissionRatings(submission.id, config)
-    .then(ratings => {
-      return {
-        ...submission,
-        ratings
-      }
-    })
-    .catch(error => {
-      console.log(error)
-      throw error
-    })
-}
-
-// Fill all specified submissions objects with their ratings 
-const retrieveRatingsIntoSubmissions = (submissions, config) => {
-  return PromiseBb.map(
-    submissions,
-    submission => retrieveRatingsIntoSubmission(submission, config),
-    { concurrency: MAX_CONCURRENT }
-  )
-  .catch(error => {
-    console.log(error)
-    throw error
-  })
-}
-
-const getEvent = (config) => {
-  return axios.get(`event`, config)
-    .then(response => {
-      return response.data
-    })
-    .catch(error => {
-      console.log(error)
-      throw error
-    })
-}
-
-const getApi = (cfpToken) => {
-  const axiosConfig = getAxiosConfig(cfpToken)
+const getApi = (cfpToken, cfpbearer) => {
+  const axiosConfig = getAxiosConfig(cfpbearer)
   console.log({axiosConfig})
   return {
-    getEvent: () => getEvent(axiosConfig),
-    getSubmissions: (numberOfSubmissions) => getSubmissions(numberOfSubmissions, axiosConfig),
-    getSubmissionFeedback: (submissionId) => getSubmissionFeedback(submissionId, axiosConfig),
-    retrieveFeedbackIntoSubmission: (submission) => retrieveFeedbackIntoSubmission(submission, axiosConfig),
-    retrieveFeedbackIntoSubmissions: (submissions) => retrieveFeedbackIntoSubmissions(submissions, axiosConfig),
-    getSubmissionRatings: (submissionId) => getSubmissionRatings(submissionId, axiosConfig),
-    retrieveRatingsIntoSubmission: (submission) => retrieveRatingsIntoSubmission(submission, axiosConfig),
-    retrieveRatingsIntoSubmissions: (submissions) => retrieveRatingsIntoSubmissions(submissions, axiosConfig)
+    getEvent: () => getEvent(axiosConfig, cfpToken),
+    getSubmissions: () => getSubmissions(axiosConfig, cfpToken)
   }
 }
 

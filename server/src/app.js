@@ -12,30 +12,20 @@ app.use(bodyParser.json())
 app.use(cors())
 
 app.post('/submissions', (req, res) => {
-  const cfpApi = cfp.getApi(req.body.token)
+  const cfpApi = cfp.getApi(req.body.token, req.body.bearer)
 
-  cfpApi.getSubmissions(1000)
+  cfpApi.getSubmissions()
+    .then(submissions => {
+      res.send(submissions)
+    })
     .catch(error => {
       console.log('Error retrieving Submissions', error);
       res.status(500).send(error)
     })
-    .then(cfpApi.retrieveFeedbackIntoSubmissions)
-    .catch(error => {
-      console.log('Error retrieving Feedbacks', error);
-      res.status(500).send(error)
-    })
-    .then(cfpApi.retrieveRatingsIntoSubmissions)
-    .catch(error => {
-      console.log('Error retrieving Ratings', error);
-      res.status(500).send(error)
-    })
-    .then(submissions => {
-      res.send(submissions)
-    })
 })
 
 app.post('/event', (req, res) => {
-  const cfpApi = cfp.getApi(req.body.token)
+  const cfpApi = cfp.getApi(req.body.token, req.body.bearer)
 
   cfpApi.getEvent()
     .then(event => {

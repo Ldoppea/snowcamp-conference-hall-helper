@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Authors from '@/views/Authors'
 import Languages from '@/views/Languages'
 import Tags from '@/views/Tags'
+import Formats from '@/views/Formats'
 import Travelers from '@/views/Travelers'
 
 Vue.use(Router)
@@ -25,6 +26,11 @@ export default new Router({
       path: '/tags',
       name: 'Tags',
       component: Tags
+    },
+    {
+      path: '/formats',
+      name: 'Formats',
+      component: Formats
     },
     {
       path: '/travelers',
